@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="66dp"
+    android:layout_marginStart="10dp">
+
+    <!--android:layout_gravity="center_vertical" makes ImageView centered vertically in LinearLayout
+            android:layout_marginHorizontal="5dp", 5dp away from the controls on the left and right
+            android:scaleType="fitXY" makes the image fill the entire ImageView, larger images will be compressed, smaller images will be stretched -->
+    <ImageView
+        android:id="@+id/music_img"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical"
+        android:background="@color/design_default_color_primary_dark"
+        android:layout_marginHorizontal="5dp"
+        android:scaleType="fitXY"/>
+
+    <!--Add a LinearLayout layout on the right side of ImageView, the layout direction is vertical
+            android:gravity="center_vertical" Let the controls in LinearLayout be vertically centered -->
+    <LinearLayout
+        android:paddingStart="10dp"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/music_file_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:text="Glory years"
+            android:textSize="16dp"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:textColor="#050505" />
+        <TextView
+            android:id="@+id/music_artist_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="Beyond"
+            android:textColor="#808080"
+            android:textSize="12dp"/>
+    </LinearLayout>
+
+</LinearLayout>
