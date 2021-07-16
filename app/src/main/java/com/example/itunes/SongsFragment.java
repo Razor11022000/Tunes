@@ -3,7 +3,6 @@ package com.example.itunes;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -68,7 +67,6 @@ public class SongsFragment extends Fragment {
             musicAdapter = new MusicAdapter(getContext(), musicFiles);
             recyclerView.setAdapter(musicAdapter);
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-
         }
         //this view object will be used to find id's of the fragment layout
         return view;

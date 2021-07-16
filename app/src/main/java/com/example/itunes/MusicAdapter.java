@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,11 +22,13 @@ import com.bumptech.glide.Glide;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import static com.example.itunes.PlayerActivity.mediaPlayer;
+
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHolder> {
     private Context context;
-    private ArrayList<MusicFiles> mFiles;
+    private ArrayList<MusicFile> mFiles;
 
-    MusicAdapter(Context context, ArrayList<MusicFiles> mFiles){
+    MusicAdapter(Context context, ArrayList<MusicFile> mFiles){
         this.context = context;
         this.mFiles = mFiles;
     }
@@ -41,8 +42,13 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
 
     @Override
     public void onBindViewHolder(@NonNull MusicAdapter.MusicViewHolder holder, int position) {
-        holder.file_name.setText(mFiles.get(position).getTitle());
-        holder.artist_name.setText(mFiles.get(position).getArtist());
+        String songTitle = mFiles.get(position).getTitle();
+        String artistName = mFiles.get(position).getArtist();
+        holder.file_name.setText(songTitle);
+
+        if(artistName == null) holder.artist_name.setText("Unknown Artist");
+        else holder.artist_name.setText(artistName);
+
         Bitmap image = getArtistImage(mFiles.get(position).getAlbumId());
         if(image != null){
             Glide.with(context).asBitmap()
@@ -57,6 +63,10 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(mediaPlayer!=null){
+                    mediaPlayer.stop();
+                    mediaPlayer.release();
+                }
                 Intent intent = new Intent(context, PlayerActivity.class);
                 intent.putExtra("position",position);
                 context.startActivity(intent);

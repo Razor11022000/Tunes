@@ -56,21 +56,6 @@
         app:layout_constraintTop_toTopOf="@id/viewSupporterForAlbumArt"
         app:riv_corner_radius="12dp"/>
 
-    <com.gauravk.audiovisualizer.visualizer.BarVisualizer
-        android:id="@+id/visualizer"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_alignParentBottom="true"
-        app:avColor="#ebcb94"
-        app:avDensity="0.5"
-        app:avSpeed="normal"
-        app:avType="outline"
-        app:avWidth="4dp"
-        app:layout_constraintBottom_toTopOf="@id/layoutPlayer"
-        app:layout_constraintTop_toBottomOf="@id/imageAlbumArt"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        tools:layout_editor_absoluteX="0dp" />
 
     <TextView
         android:id="@+id/textTitle"
@@ -161,16 +146,18 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/buttonPlay"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="32dp"
-            android:background="@drawable/play_pause_button_background"
+            android:background="@color/white"
             android:padding="12dp"
             android:src="@drawable/ic_play"
             app:layout_constraintBottom_toTopOf="@id/imageLyrics"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.498"
             app:layout_constraintStart_toStartOf="parent"
+            android:focusable="true"
+            android:clickable="true"
             app:tint="@color/white" />
 
         <ImageButton
@@ -178,7 +165,7 @@
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:layout_marginEnd="15dp"
-            android:background="@drawable/next_previous_button_background"
+            android:background="@color/white"
             android:padding="4dp"
             android:src="@drawable/ic_previous"
             app:layout_constraintBottom_toBottomOf="@id/buttonPlay"
@@ -190,7 +177,7 @@
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:layout_marginStart="15dp"
-            android:background="@drawable/next_previous_button_background"
+            android:background="@color/white"
             android:padding="4dp"
             android:src="@drawable/ic_next"
             app:layout_constraintBottom_toBottomOf="@id/buttonPlay"
@@ -228,6 +215,9 @@
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="25dp"
+            android:thumbTint="#6E498E"
+            android:progressTint="#6E498E"
+            android:progressBackgroundTint="#F8F8F8"
             android:progress="30"
             app:layout_constraintBottom_toTopOf="@id/buttonPlay"/>
 
