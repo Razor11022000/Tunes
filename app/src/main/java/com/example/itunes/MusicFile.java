@@ -4,6 +4,7 @@ import android.net.Uri;
 
 public class MusicFile {
     private Uri uri;
+    private String id;
     private String title;
     private String artist;
     private String albumid;

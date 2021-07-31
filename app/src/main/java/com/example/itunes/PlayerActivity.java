@@ -1,32 +1,46 @@
 package com.example.itunes;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Random;
 
+import static com.example.itunes.AlbumDetailsAdapter.albumFiles;
 import static com.example.itunes.MainActivity.musicFiles;
+import static com.example.itunes.MainActivity.repeatBoolean;
+import static com.example.itunes.MainActivity.shuffleBoolean;
+import static com.example.itunes.MusicAdapter.mFiles;
 
-public class PlayerActivity extends AppCompatActivity {
+public class PlayerActivity extends AppCompatActivity
+        implements MediaPlayer.OnCompletionListener, ActionPlaying, ServiceConnection {
     ImageButton btnNext, btnPrevious, btnShuffle, btnRepeat;
     FloatingActionButton btnPlayPause;
     TextView tvSongName, tvSongArtist, tvDurationPlayed, tvTotalDuration;
@@ -39,6 +53,8 @@ public class PlayerActivity extends AppCompatActivity {
     private final Handler handler = new Handler();
     private Uri uri;
     private Thread nextSongThread, prevSongThread, playSongThread;
+    MusicService musicService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +75,7 @@ public class PlayerActivity extends AppCompatActivity {
 //        btnPlay.setImageResource(R.drawable.ic_pause);
 //        musicService.startService(intent);
 //        seekBar.setMax(musicService.mediaPlayerDuration());
+        mediaPlayer.setOnCompletionListener(this);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -88,14 +105,48 @@ public class PlayerActivity extends AppCompatActivity {
                 handler.postDelayed(this, 1000);
             }
         });
+        btnShuffle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(shuffleBoolean){
+                    shuffleBoolean = false;
+                    btnShuffle.setImageResource(R.drawable.ic_shuffle);
+                }
+                else{
+                    shuffleBoolean = true;
+                    btnShuffle.setImageResource(R.drawable.ic_shuffle_on);
+                }
+            }
+        });
+        btnRepeat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(repeatBoolean){
+                    repeatBoolean = false;
+                    btnRepeat.setImageResource(R.drawable.ic_repeat);
+                }
+                else{
+                    repeatBoolean = true;
+                    btnRepeat.setImageResource(R.drawable.ic_repeat_on);
+                }
+            }
+        });
     }
 
     @Override
     protected void onResume() {
+        Intent intent = new Intent(this, MusicService.class);
+        bindService(intent, this, BIND_AUTO_CREATE);
         playThreadBtn();
         nextThreadBtn();
         prevThreadBtn();
         super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unbindService(this);
     }
 
     private void playThreadBtn() {
@@ -109,7 +160,7 @@ public class PlayerActivity extends AppCompatActivity {
         playSongThread.start();
     }
 
-    private void playPauseBtnClicked() {
+    public void playPauseBtnClicked() {
         if(mediaPlayer.isPlaying()){
             btnPlayPause.setImageResource(R.drawable.ic_play);
             mediaPlayer.pause();
@@ -153,11 +204,16 @@ public class PlayerActivity extends AppCompatActivity {
         nextSongThread.start();
     }
 
-    private void nextBtnClicked() {
+    public void nextBtnClicked() {
         if(mediaPlayer.isPlaying()){
             mediaPlayer.stop();
             mediaPlayer.release();
-            position = ((position+1) % listSongs.size());
+            if(shuffleBoolean && !repeatBoolean){
+                position = getRandom(listSongs.size() - 1);
+            }
+            else if (!shuffleBoolean && !repeatBoolean){
+                position = ((position+1) % listSongs.size());
+            }
             uri = listSongs.get(position).getUri();
             mediaPlayer = MediaPlayer.create(this, uri);
             getSongDetails(position);
@@ -171,13 +227,19 @@ public class PlayerActivity extends AppCompatActivity {
                     handler.postDelayed(this, 1000);
                 }
             });
+            mediaPlayer.setOnCompletionListener(this);
             btnPlayPause.setImageResource(R.drawable.ic_pause);
             mediaPlayer.start();
         }
         else{
             mediaPlayer.stop();
             mediaPlayer.release();
-            position = ((position+1) % listSongs.size());
+            if(shuffleBoolean && !repeatBoolean){
+                position = getRandom(listSongs.size() - 1);
+            }
+            else if (!shuffleBoolean && !repeatBoolean){
+                position = ((position+1) % listSongs.size());
+            }
             uri = listSongs.get(position).getUri();
             mediaPlayer = MediaPlayer.create(this, uri);
             getSongDetails(position);
@@ -191,8 +253,14 @@ public class PlayerActivity extends AppCompatActivity {
                     handler.postDelayed(this, 1000);
                 }
             });
+            mediaPlayer.setOnCompletionListener(this);
             btnPlayPause.setImageResource(R.drawable.ic_play);
         }
+    }
+
+    private int getRandom(int i) {
+        Random random = new Random();
+        return random.nextInt(i + 1);
     }
 
     private void prevThreadBtn() {
@@ -206,11 +274,16 @@ public class PlayerActivity extends AppCompatActivity {
         prevSongThread.start();
     }
 
-    private void prevBtnClicked() {
+    public void prevBtnClicked() {
         if(mediaPlayer.isPlaying()){
             mediaPlayer.stop();
             mediaPlayer.release();
-            position = ((position-1) < 0 ? (listSongs.size()-1) : (position-1));
+            if(shuffleBoolean && !repeatBoolean){
+                position = getRandom(listSongs.size() - 1);
+            }
+            else if (!shuffleBoolean && !repeatBoolean){
+                position = ((position-1) < 0 ? (listSongs.size()-1) : (position-1));
+            }
             uri = listSongs.get(position).getUri();
             mediaPlayer = MediaPlayer.create(this, uri);
             getSongDetails(position);
@@ -224,13 +297,19 @@ public class PlayerActivity extends AppCompatActivity {
                     handler.postDelayed(this, 1000);
                 }
             });
+            mediaPlayer.setOnCompletionListener(this);
             btnPlayPause.setImageResource(R.drawable.ic_pause);
             mediaPlayer.start();
         }
         else{
             mediaPlayer.stop();
             mediaPlayer.release();
-            position = ((position-1) < 0 ? (listSongs.size()-1) : (position-1));
+            if(shuffleBoolean && !repeatBoolean){
+                position = getRandom(listSongs.size() - 1);
+            }
+            else if (!shuffleBoolean && !repeatBoolean){
+                position = ((position-1) < 0 ? (listSongs.size()-1) : (position-1));
+            }
             uri = listSongs.get(position).getUri();
             mediaPlayer = MediaPlayer.create(this, uri);
             getSongDetails(position);
@@ -244,6 +323,7 @@ public class PlayerActivity extends AppCompatActivity {
                     handler.postDelayed(this, 1000);
                 }
             });
+            mediaPlayer.setOnCompletionListener(this);
             btnPlayPause.setImageResource(R.drawable.ic_play);
         }
     }
@@ -261,8 +341,10 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void getIntentMethod() {
         position = getIntent().getIntExtra("position",-1);
-        listSongs = musicFiles;
-        Log.d("getIntentMethod", "getIntentMethod:"+listSongs.get(position).getUri());
+        String sender = getIntent().getStringExtra("sender");
+
+        if(sender != null && sender.equals("albumDetails")) listSongs = albumFiles;
+        else listSongs = mFiles;
 
         if(listSongs != null) {
             btnPlayPause.setImageResource(R.drawable.ic_pause);
@@ -316,9 +398,7 @@ public class PlayerActivity extends AppCompatActivity {
         tvSongArtist.setText(listSongs.get(position).getArtist());
         Bitmap image = getArtistImage(listSongs.get(position).getAlbumId());
         if(image != null){
-            Glide.with(this).asBitmap()
-                    .load(image)
-                    .into(coverArt);
+            ImageAnimation(this, coverArt, image);
         }
         else{
             Glide.with(this)
@@ -352,4 +432,64 @@ public class PlayerActivity extends AppCompatActivity {
 //        }
 //        return false;
 //    }
+    public void ImageAnimation(Context context, ImageView imageView, Bitmap bitmap){
+        Animation animOut = AnimationUtils.loadAnimation(context, android.R.anim.fade_out);
+        Animation animIn = AnimationUtils.loadAnimation(context, android.R.anim.fade_in);
+        animOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Glide.with(context).load(bitmap).into(imageView);
+                animIn.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+
+                    }
+                });
+                imageView.startAnimation(animIn);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        imageView.startAnimation(animOut);
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        nextBtnClicked();
+        if(mediaPlayer!=null){
+            mediaPlayer = MediaPlayer.create(getApplicationContext(), uri);
+            mediaPlayer.start();
+            mediaPlayer.setOnCompletionListener(this);
+        }
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+        MusicService.MyBinder myBinder = (MusicService.MyBinder) iBinder;
+        musicService = myBinder.getService();
+        Toast.makeText(this, "Connected" + musicService, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName componentName) {
+        musicService = null;
+    }
 }
